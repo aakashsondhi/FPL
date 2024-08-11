@@ -1,6 +1,8 @@
 import requests
 import streamlit as st
 import pandas as pd
+import json
+import os
 
 # Function to fetch FPL data based on the team ID
 def fetch_fpl_data(team_id):
@@ -19,13 +21,25 @@ def process_fpl_data(data, team_id):
         return seasons
     return {}
 
+# Function to load team data from a file
+def load_team_data(filename="team_data.json"):
+    if os.path.exists(filename):
+        with open(filename, "r") as file:
+            return json.load(file)
+    return {}
+
+# Function to save team data to a file
+def save_team_data(team_data, filename="team_data.json"):
+    with open(filename, "w") as file:
+        json.dump(team_data, file)
+
 # Main function to run the Streamlit app
 def main():
     st.title("Fantasy Premier League Team Tracker")
 
     # Initialize session state to store multiple teams' data
     if 'teams_data' not in st.session_state:
-        st.session_state['teams_data'] = {}
+        st.session_state['teams_data'] = load_team_data()
 
     # Input for team ID
     team_id_input = st.text_input("Enter FPL Team ID", "")
@@ -36,6 +50,8 @@ def main():
             team_data = process_fpl_data(data, team_id_input)
             if team_data:
                 st.session_state['teams_data'][team_id_input] = team_data
+                # Save updated team data to file
+                save_team_data(st.session_state['teams_data'])
         else:
             st.error("Please enter a valid team ID.")
 
